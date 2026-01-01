@@ -1045,20 +1045,38 @@ export const askToAssistant = async (req, res) => {
     }
 
     // ----- Safe JSON parse -----
-    let gemResult;
-    try {
-      const jsonMatch = result.match(/{[\s\S]*}/);
-      gemResult = jsonMatch ? JSON.parse(jsonMatch[0]) : { type: "general", response: result, userInput: command };
-    } catch (err) {
-      console.warn("JSON parse error, using raw result:", err);
-      gemResult = { type: "general", response: result || "I couldn't understand that.", userInput: command };
+    // let gemResult;
+    // try {
+    //   const jsonMatch = result.match(/{[\s\S]*}/);
+    //   gemResult = jsonMatch ? JSON.parse(jsonMatch[0]) : { type: "general", response: result, userInput: command };
+    // } catch (err) {
+    //   console.warn("JSON parse error, using raw result:", err);
+    //   gemResult = { type: "general", response: result || "I couldn't understand that.", userInput: command };
+    // }
+
+
+    let gemResult = result;
+
+    if (typeof gemResult === "string") {
+      try { gemResult = JSON.parse(gemResult); } catch {
+        gemResult = { response: gemResult };
+      }
     }
+
+
+
+    // return res.json({
+    //   type: gemResult.type || "general",
+    //   userInput: gemResult.userInput || command,
+    //   response: gemResult.response || "Done"
+    // });
 
     return res.json({
       type: gemResult.type || "general",
-      userInput: gemResult.userInput || command,
-      response: gemResult.response || "Done"
+      userInput: command,
+      response: gemResult.response || gemResult.text || "I am busy, please try again."
     });
+
 
   } catch (error) {
     console.error("askToAssistant error:", error);
