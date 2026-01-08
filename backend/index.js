@@ -21,6 +21,7 @@ app.use(cookieParser())
 app.use("/api/auth",authRouter)
 app.use("/api/user",userRouter)
 
+console.log("GROQ KEY:", process.env.GROQ_API_KEY);
 
 // app.listen(port,()=>{
 //     connectDb()

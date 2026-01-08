@@ -3494,6 +3494,11 @@ function Home() {
 
   const synth = window.speechSynthesis;
 
+  useEffect(() => {
+    window.speechSynthesis.onvoiceschanged = () => {};
+  }, []);
+
+
   // 🔹 Log Out
   const handleLogOut = async () => {
     try {
@@ -3574,7 +3579,7 @@ function Home() {
     if (!SpeechRecognition) return;
 
     const recognition = new SpeechRecognition();
-    recognition.continuous = false;
+    recognition.continuous = true;
     recognition.interimResults = false;
     recognition.lang = 'en-US';
     recognitionRef.current = recognition;
@@ -3797,11 +3802,19 @@ function Home() {
   };
 
 
+    // if (userData?.name) {
+    //   const greeting = new SpeechSynthesisUtterance(`Hello ${userData.name}, what can I help you with?`);
+    //   greeting.lang = 'hi-IN';
+    //   synth.speak(greeting);
+    // }
+
+
     if (userData?.name) {
-      const greeting = new SpeechSynthesisUtterance(`Hello ${userData.name}, what can I help you with?`);
-      greeting.lang = 'hi-IN';
-      synth.speak(greeting);
+      setTimeout(() => {
+        speak(`Hello ${userData.name}, what can I help you with?`);
+      }, 600);
     }
+
 
     startRecognition();
 

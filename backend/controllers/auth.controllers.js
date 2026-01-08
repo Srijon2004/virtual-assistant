@@ -77,7 +77,13 @@ try {
 export const logOut=async (req,res)=>{
     try {
         res.clearCookie("token")
-         return res.status(200).json({message:"log out successfully"})
+        //  return res.status(200).json({message:"log out successfully"})
+        // res.clearCookie("token", {
+        //     sameSite: "none",
+        //     secure: false,
+        //     path: "/"
+        // });
+        return res.status(200).json({message:"log out successfully"})
     } catch (error) {
          return res.status(500).json({message:`logout error ${error}`})
     }

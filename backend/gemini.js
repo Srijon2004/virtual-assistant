@@ -173,6 +173,97 @@
 
 
 
+// --
+// import axios from "axios";
+
+// let lastCall = 0;
+
+// const geminiResponse = async (command, assistantName, userName) => {
+
+//   if (Date.now() - lastCall < 2000) {
+//     return {
+//       type: "general",
+//       userInput: command,
+//       response: "Please speak slowly."
+//     };
+//   }
+
+//   lastCall = Date.now();
+
+//   try {
+//     // const apiUrl =
+//     //   "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=" +
+//     //   process.env.GEMINI_KEY;
+//     const apiUrl =
+//       "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=" +
+//       process.env.GEMINI_KEY;
+
+
+
+//     const prompt = `
+// Return ONLY valid JSON:
+
+// {
+//  "type":"general | google-search | youtube-search | youtube-play | get-time | get-date | get-day | get-month | calculator-open | instagram-open | facebook-open | weather-show",
+//  "userInput":"${command}",
+//  "response":"short voice reply"
+// }
+
+// Rules:
+// - Assistant name is ${assistantName}
+// - Creator is ${userName}
+// - Short replies only
+// - No extra text
+
+// User Question: ${command}
+// `;
+
+//     // const result = await axios.post(apiUrl, {
+//     //   contents: [{ role: "user", parts: [{ text: prompt }] }],
+//     //   generationConfig: {
+//     //     temperature: 0.2,
+//     //     maxOutputTokens: 200
+//     //   }
+//     // });
+
+//     const result = await axios.post(apiUrl, {
+//       contents: [
+//         {
+//           role: "user",
+//           parts: [{ text: prompt + "\nUser Question: " + command }]
+//         }
+//       ],
+//       generationConfig: {
+//         temperature: 0.3,
+//         maxOutputTokens: 200
+//       }
+//     });
+
+
+//     const raw = result.data.candidates[0].content.parts[0].text;
+//     return JSON.parse(raw);
+
+//   } catch (err) {
+//     console.log("Gemini Error:", err.response?.data || err.message);
+//     return {
+//       type: "general",
+//       userInput: command,
+//       response: "Sorry, the AI service is busy or rate-limited. Please try again in a few seconds."
+//     };
+//   }
+// };
+
+// export default geminiResponse;
+
+
+
+
+
+
+
+
+
+
 
 import axios from "axios";
 
@@ -191,100 +282,71 @@ const geminiResponse = async (command, assistantName, userName) => {
   lastCall = Date.now();
 
   try {
-    // const apiUrl =
-    //   "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=" +
-    //   process.env.GEMINI_KEY;
-    const apiUrl =
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=" +
-      process.env.GEMINI_KEY;
 
+    const apiUrl = "https://api.groq.com/openai/v1/chat/completions";
 
+//     const prompt = `
+// Return ONLY valid JSON:
 
-    const prompt = `
-Return ONLY valid JSON:
+// {
+//  "type":"general | google-search | youtube-search | youtube-play | get-time | get-date | get-day | get-month | calculator-open | instagram-open | facebook-open | weather-show",
+//  "userInput":"${command}",
+//  "response":"short voice reply"
+// }
+
+// Rules:
+// - Assistant name is ${assistantName}
+// - Creator is ${userName}
+// - Short replies only
+// - No extra text
+
+// User Question: ${command}
+// `;
+const prompt = `
+You are a voice assistant.
+
+You must return ONLY valid JSON in this format:
 
 {
  "type":"general | google-search | youtube-search | youtube-play | get-time | get-date | get-day | get-month | calculator-open | instagram-open | facebook-open | weather-show",
  "userInput":"${command}",
- "response":"short voice reply"
+ "response":"<natural short voice reply>"
 }
 
 Rules:
 - Assistant name is ${assistantName}
 - Creator is ${userName}
-- Short replies only
-- No extra text
+- "response" must be a REAL short answer, not placeholder text
+- No extra text, no explanation, no markdown
 
 User Question: ${command}
 `;
 
-    // const result = await axios.post(apiUrl, {
-    //   contents: [{ role: "user", parts: [{ text: prompt }] }],
-    //   generationConfig: {
-    //     temperature: 0.2,
-    //     maxOutputTokens: 200
-    //   }
-    // });
+
 
     const result = await axios.post(apiUrl, {
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: prompt + "\nUser Question: " + command }]
-        }
-      ],
-      generationConfig: {
-        temperature: 0.3,
-        maxOutputTokens: 200
+      model: "llama-3.1-8b-instant",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.3,
+      max_tokens: 200
+    }, {
+      headers: {
+        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        "Content-Type": "application/json"
       }
     });
 
-
-    const raw = result.data.candidates[0].content.parts[0].text;
+    const raw = result.data.choices[0].message.content;
     return JSON.parse(raw);
 
   } catch (err) {
-    console.log("Gemini Error:", err.response?.data || err.message);
+    console.log("Groq Error:", err.response?.data || err.message);
     return {
       type: "general",
       userInput: command,
-      response: "Sorry, the AI service is busy or rate-limited. Please try again in a few seconds."
+      response: "AI is busy, please try again."
     };
   }
 };
 
 export default geminiResponse;
-
-
-
-
-
-
-
-
-
-
-
-
-// ********************************************************
-// import { GoogleGenerativeAI } from "@google/generative-ai";
-
-// const genAI = new GoogleGenerativeAI(process.env.GEMINI_KEY);
-
-// const geminiResponse = async (command, assistantName, userName) => {
-//   const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-//   const prompt = `
-// User asked: "${command}"
-// Reply with a short clear spoken answer.
-// `;
-
-//   const result = await model.generateContent(prompt);
-//   return {
-//     type: "general",
-//     userInput: command,
-//     response: result.response.text()
-//   };
-// };
-
-// export default geminiResponse;
