@@ -1,5 +1,5 @@
 import React, { useContext, useState } from "react";
-import bg from "../assets/authBg.png";
+// import bg from "../assets/authBg.png";
 import { IoEye } from "react-icons/io5";
 import { IoEyeOff } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
@@ -67,7 +67,8 @@ function SignIn() {
   return (
     <div
       className="w-full h-[100vh] bg-cover flex justify-center items-center"
-      style={{ backgroundImage: `url(${bg})` }}
+      style={{ backgroundImage: "url(/authBg.png)" }}
+
     >
       {/* <form className='w-[90%] h-[600px] max-w-[500px] bg-[#00000062] backdrop-blur shadow-lg shadow-black flex flex-col items-center justify-center gap-[20px] px-[20px]' onSubmit={handleSignIn}>
 <h1 className='text-white text-[30px] font-semibold mb-[30px]'>Sign In to <span className='text-blue-400'>Virtual Assistant</span></h1>
