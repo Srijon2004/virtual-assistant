@@ -7,6 +7,8 @@ import cors from "cors"
 import cookieParser from "cookie-parser"
 import userRouter from "./routes/user.routes.js"
 import geminiResponse from "./gemini.js"
+import authRoutes from "./routes/auth.routes.js";
+
 
 
 const app=express()
@@ -20,7 +22,7 @@ app.use(express.json())
 app.use(cookieParser())
 app.use("/api/auth",authRouter)
 app.use("/api/user",userRouter)
-
+app.use("/api/auth", authRoutes);
 console.log("GROQ KEY:", process.env.GROQ_API_KEY);
 
 // app.listen(port,()=>{
