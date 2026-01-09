@@ -239,8 +239,8 @@ export const userDataContext = createContext();
 
 function UserContext({ children }) {
   // Centralized server URL
-  const serverUrl = "http://localhost:8000"; 
-  
+  // const serverUrl = "http://localhost:8000"; 
+  const serverUrl = "https://virtual-assistant-uijf.onrender.com"; 
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true); // Track auth status to prevent redirect flicker
   const [frontendImage, setFrontendImage] = useState(null);
