@@ -3476,6 +3476,14 @@ import { FiSend } from "react-icons/fi";
 import { MdOutlineEdit } from "react-icons/md";
 
 function Home() {
+
+  const [shouldListen, setShouldListen] = useState(true); // 👈 NEW
+
+
+
+
+
+
   const { userData, serverUrl, setUserData, getGeminiResponse } = useContext(userDataContext);
   const navigate = useNavigate();
 
@@ -3512,17 +3520,41 @@ function Home() {
   };
 
   // 🔹 Start recognition
+  // const startRecognition = () => {
+  //   try {
+  //     if (!isSpeakingRef.current) {
+  //       recognitionRef.current?.start();
+  //       setListening(true);
+  //       console.log("🎤 Voice recognition started...");
+  //     }
+  //   } catch (error) {
+  //     if (error.name !== "InvalidStateError") console.error("Start error:", error);
+  //   }
+  // };
+
+
+
+  // new
   const startRecognition = () => {
+    setShouldListen(true); // 👈 declare intent
     try {
-      if (!isSpeakingRef.current) {
-        recognitionRef.current?.start();
-        setListening(true);
-        console.log("🎤 Voice recognition started...");
-      }
-    } catch (error) {
-      if (error.name !== "InvalidStateError") console.error("Start error:", error);
-    }
+      recognitionRef.current?.start();
+      setListening(true);
+      console.log("🎤 Voice recognition started...");
+    } catch (e) {}
   };
+
+  const stopRecognition = () => {
+    setShouldListen(false);
+    recognitionRef.current?.stop();
+    setListening(false);
+  };
+
+
+
+
+
+
 
   // 🔹 Speak function
   const speak = (text) => {
@@ -3591,16 +3623,33 @@ function Home() {
       setListening(true);
     };
 
+    // recognition.onend = () => {
+    //   console.log("⛔ Recognition OFF");
+    //   setListening(false);
+
+    //   // if (isMounted && !isSpeakingRef.current) {
+    //   //   // setTimeout(() => startRecognition(), 1000);
+    //   //   setTimeout(() => startRecognition(), 1500);
+
+    //   // }
+    // };
+
+
+    // new
     recognition.onend = () => {
       console.log("⛔ Recognition OFF");
       setListening(false);
 
-      // if (isMounted && !isSpeakingRef.current) {
-      //   // setTimeout(() => startRecognition(), 1000);
-      //   setTimeout(() => startRecognition(), 1500);
-
-      // }
+      // 🔁 AUTO-HEAL LOOP (THIS IS THE MAGIC)
+      if (shouldListen && !isSpeakingRef.current) {
+        setTimeout(() => {
+          try { recognition.start(); } catch(e) {}
+        }, 700);
+      }
     };
+
+
+
 
     recognition.onerror = (event) => {
       console.warn("⚠️ Recognition error:", event.error);
