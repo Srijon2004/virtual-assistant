@@ -70,7 +70,9 @@ function SignUp() {
   return (
     <div
       className="w-full h-[100vh] bg-cover flex justify-center items-center"
-      style={{ backgroundImage: "url(/image3.png)" }}
+      // style={{ backgroundImage: "url(/image3.png)" }}
+      style={{ backgroundImage: "url(/assistant/image3.png)" }}
+
     >
       {/* <form className='w-[90%] h-[600px] max-w-[500px] bg-[#00000062] backdrop-blur shadow-lg shadow-black flex flex-col items-center justify-center gap-[20px] px-[20px]' onSubmit={handleSignUp}>
 <h1 className='text-white text-[30px] font-semibold mb-[30px]'>Register to <span className='text-blue-400'>Virtual Assistant</span></h1>
