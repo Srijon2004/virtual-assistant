@@ -3476,8 +3476,9 @@ import { FiSend } from "react-icons/fi";
 import { MdOutlineEdit } from "react-icons/md";
 
 function Home() {
+  // const [shouldListen, setShouldListen] = useState(true);
 
-  const [shouldListen, setShouldListen] = useState(true); // 👈 NEW
+  const shouldListenRef = useRef(true); // 👈 NEW
 
 
 
@@ -3535,20 +3536,37 @@ function Home() {
 
 
   // new
-  const startRecognition = () => {
-    setShouldListen(true); // 👈 declare intent
-    try {
-      recognitionRef.current?.start();
-      setListening(true);
-      console.log("🎤 Voice recognition started...");
-    } catch (e) {}
-  };
+  // const startRecognition = () => {
+  //   setShouldListen(true); // 👈 declare intent
+  //   try {
+  //     recognitionRef.current?.start();
+  //     setListening(true);
+  //     console.log("🎤 Voice recognition started...");
+  //   } catch (e) {}
+  // };
 
-  const stopRecognition = () => {
-    setShouldListen(false);
-    recognitionRef.current?.stop();
-    setListening(false);
-  };
+  // const stopRecognition = () => {
+  //   setShouldListen(false);
+  //   recognitionRef.current?.stop();
+  //   setListening(false);
+  // };
+
+
+  // 2nd new
+  const startRecognition = () => {
+  shouldListenRef.current = true;
+  try {
+    recognitionRef.current?.start();
+    setListening(true);
+  } catch(e) {}
+};
+
+const stopRecognition = () => {
+  shouldListenRef.current = false;
+  recognitionRef.current?.stop();
+  setListening(false);
+};
+
 
 
 
@@ -3635,18 +3653,32 @@ function Home() {
     // };
 
 
-    // new
+    // // new
+    // recognition.onend = () => {
+    //   console.log("⛔ Recognition OFF");
+    //   setListening(false);
+
+    //   // 🔁 AUTO-HEAL LOOP (THIS IS THE MAGIC)
+    //   if (shouldListen && !isSpeakingRef.current) {
+    //     setTimeout(() => {
+    //       try { recognition.start(); } catch(e) {}
+    //     }, 700);
+    //   }
+    // };
+
+    // 2nd
     recognition.onend = () => {
       console.log("⛔ Recognition OFF");
       setListening(false);
 
-      // 🔁 AUTO-HEAL LOOP (THIS IS THE MAGIC)
-      if (shouldListen && !isSpeakingRef.current) {
+      // TRUE AUTO-HEAL LOOP
+      if (shouldListenRef.current && !isSpeakingRef.current) {
         setTimeout(() => {
           try { recognition.start(); } catch(e) {}
         }, 700);
       }
     };
+
 
 
 
