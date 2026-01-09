@@ -1,5 +1,5 @@
 import React, { useContext, useState } from "react";
-import bg from "../assets/authBg.png"
+// import bg from "../assets/authBg.png"
 
 import { IoEye } from "react-icons/io5";
 import { IoEyeOff } from "react-icons/io5";
