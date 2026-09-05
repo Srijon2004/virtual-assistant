@@ -325,10 +325,12 @@ User Question: ${command}
 
 
     const result = await axios.post(apiUrl, {
-      model: "llama-3.1-8b-instant",
+      // model: "llama-3.1-8b-instant",
+      model: "openai/gpt-oss-20b",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.3,
-      max_tokens: 200
+      max_tokens: 200,
+      response_format: { type: "json_object" }
     }, {
       headers: {
         Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
