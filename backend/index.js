@@ -14,7 +14,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173", // local frontend
-      "https://aiassistant-cvjv.onrender.com", // 👈 ADD YOUR LIVE FRONTEND URL
+      "https://aiassistant-cvjv.onrender.com", //  LIVE FRONTEND URL
     ],
     credentials: true,
   })
@@ -27,11 +27,6 @@ app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
 app.use("/api/auth", authRoutes);
 console.log("GROQ KEY:", process.env.GROQ_API_KEY);
-
-// app.listen(port,()=>{
-//     connectDb()
-//     console.log(`server started at ${port}`)
-// })
 
 app.listen(port, () => {
   connectDb();
