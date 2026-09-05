@@ -43,13 +43,12 @@ return res.status(200).json(user)
    }
 }
 
-
 export const askToAssistant = async (req, res) => {
   try {
     const { command } = req.body;
     const userId = req.userId;
 
-    if (!command) {
+    if (!command || !command.trim()) {
       return res.status(400).json({
         type: "error",
         response: "User input is required",
@@ -57,126 +56,216 @@ export const askToAssistant = async (req, res) => {
       });
     }
 
+    const cleanCommand = command.trim();
+
     const user = await User.findById(userId);
+
     if (!user) {
       return res.status(400).json({
         type: "error",
         response: "User not found",
-        userInput: command
+        userInput: cleanCommand
       });
     }
 
-    // ----- Check cooldown -----
-    const lastRequest = userCooldowns.get(userId);
-    const now = Date.now();
-    if (lastRequest && now - lastRequest < COOLDOWN) {
-      return res.json({
-        type: "general",
-        userInput: command,
-        response: "Please wait a few seconds before sending another request."
-      });
-    }
+    // ==============================
+    // SAVE COMMAND TO HISTORY
+    // ==============================
 
-    // Update last request time
-    userCooldowns.set(userId, now);
-
-    // Save command to user history
-    user.history.push(command);
+    user.history.push(cleanCommand);
     await user.save();
 
     const assistantName = user.assistantName;
     const userName = user.name;
-    const lowerCommand = command.toLowerCase();
+    const lowerCommand = cleanCommand.toLowerCase();
 
-    // ----- Explicit common commands -----
-    if (lowerCommand.includes("what is your name") || lowerCommand.includes("your name")) {
-      return res.json({ type: "get-name", userInput: command, response: `My name is ${assistantName || "Assistant"}.` });
+    // ==============================
+    // EXPLICIT COMMON COMMANDS
+    // ==============================
+
+    if (
+      lowerCommand.includes("what is your name") ||
+      lowerCommand.includes("your name")
+    ) {
+      return res.json({
+        type: "get-name",
+        userInput: cleanCommand,
+        response: `My name is ${
+          assistantName || "Assistant"
+        }.`
+      });
     }
-    if (lowerCommand.includes("how old are you") || lowerCommand.includes("your age")) {
-      return res.json({ type: "get-age", userInput: command, response: "I am an AI assistant, so I don’t have an age like humans." });
+
+    if (
+      lowerCommand.includes("how old are you") ||
+      lowerCommand.includes("your age")
+    ) {
+      return res.json({
+        type: "get-age",
+        userInput: cleanCommand,
+        response:
+          "I am an AI assistant, so I don’t have an age like humans."
+      });
     }
+
     if (lowerCommand.includes("how are you")) {
-      return res.json({ type: "get-status", userInput: command, response: "I am doing great! How about you?" });
-    }
-    if (lowerCommand.includes("date")) {
-      return res.json({ type: "get-date", userInput: command, response: `Current date is ${moment().format("YYYY-MM-DD")}` });
-    }
-    if (lowerCommand.includes("time")) {
-      return res.json({ type: "get-time", userInput: command, response: `Current time is ${moment().format("hh:mm A")}` });
-    }
-    if (lowerCommand.includes("day")) {
-      return res.json({ type: "get-day", userInput: command, response: `Today is ${moment().format("dddd")}` });
-    }
-    if (lowerCommand.includes("month")) {
-      return res.json({ type: "get-month", userInput: command, response: `This month is ${moment().format("MMMM")}` });
+      return res.json({
+        type: "get-status",
+        userInput: cleanCommand,
+        response: "I am doing great! How about you?"
+      });
     }
 
-    // ----- Fallback to AI with retry for 429 -----
-    const callGemini = async (retries = 3, delay = 3000) => {
+    if (lowerCommand.includes("date")) {
+      return res.json({
+        type: "get-date",
+        userInput: cleanCommand,
+        response: `Current date is ${moment().format(
+          "YYYY-MM-DD"
+        )}`
+      });
+    }
+
+    if (lowerCommand.includes("time")) {
+      return res.json({
+        type: "get-time",
+        userInput: cleanCommand,
+        response: `Current time is ${moment().format(
+          "hh:mm A"
+        )}`
+      });
+    }
+
+    if (lowerCommand.includes("day")) {
+      return res.json({
+        type: "get-day",
+        userInput: cleanCommand,
+        response: `Today is ${moment().format(
+          "dddd"
+        )}`
+      });
+    }
+
+    if (lowerCommand.includes("month")) {
+      return res.json({
+        type: "get-month",
+        userInput: cleanCommand,
+        response: `This month is ${moment().format(
+          "MMMM"
+        )}`
+      });
+    }
+
+    // ==============================
+    // GEMINI / AI REQUEST
+    // ==============================
+
+    const callGemini = async (
+      retries = 3,
+      delay = 3000
+    ) => {
       try {
-        const result = await geminiResponse(command, assistantName, userName);
+        const result = await geminiResponse(
+          cleanCommand,
+          assistantName,
+          userName
+        );
+
         return result;
+
       } catch (err) {
-        if (err.response?.status === 429 && retries > 0) {
-          console.warn(`Rate limit hit. Retrying in ${delay / 1000}s...`);
-          await new Promise(r => setTimeout(r, delay));
-          return callGemini(retries - 1, delay * 2);
+
+        if (
+          err.response?.status === 429 &&
+          retries > 0
+        ) {
+          console.warn(
+            `Rate limit hit. Retrying in ${
+              delay / 1000
+            }s...`
+          );
+
+          await new Promise((resolve) =>
+            setTimeout(resolve, delay)
+          );
+
+          return callGemini(
+            retries - 1,
+            delay * 2
+          );
         }
-        console.error("Gemini API error:", err.response?.data || err.message);
+
+        console.error(
+          "Gemini API error:",
+          err.response?.data ||
+            err.message
+        );
+
         return null;
       }
     };
 
-    let result = await callGemini();
+    const result = await callGemini();
+
+    // ==============================
+    // AI FAILED
+    // ==============================
 
     if (!result) {
       return res.json({
         type: "general",
-        userInput: command,
-        response: "Sorry, the AI service is busy or rate-limited. Please try again in a few seconds."
+        userInput: cleanCommand,
+        response:
+          "Sorry, the AI service is temporarily unavailable. Please try again."
       });
     }
 
-    // ----- Safe JSON parse -----
-    // let gemResult;
-    // try {
-    //   const jsonMatch = result.match(/{[\s\S]*}/);
-    //   gemResult = jsonMatch ? JSON.parse(jsonMatch[0]) : { type: "general", response: result, userInput: command };
-    // } catch (err) {
-    //   console.warn("JSON parse error, using raw result:", err);
-    //   gemResult = { type: "general", response: result || "I couldn't understand that.", userInput: command };
-    // }
-
+    // ==============================
+    // SAFE JSON PARSE
+    // ==============================
 
     let gemResult = result;
 
     if (typeof gemResult === "string") {
-      try { gemResult = JSON.parse(gemResult); } catch {
-        gemResult = { response: gemResult };
+      try {
+        gemResult = JSON.parse(gemResult);
+      } catch {
+        gemResult = {
+          response: gemResult
+        };
       }
     }
 
-
-
-    // return res.json({
-    //   type: gemResult.type || "general",
-    //   userInput: gemResult.userInput || command,
-    //   response: gemResult.response || "Done"
-    // });
+    // ==============================
+    // FINAL RESPONSE
+    // ==============================
 
     return res.json({
-      type: gemResult.type || "general",
-      userInput: command,
-      response: gemResult.response || gemResult.text || "I am busy, please try again."
+      type:
+        gemResult?.type ||
+        "general",
+
+      userInput: cleanCommand,
+
+      response:
+        gemResult?.response ||
+        gemResult?.text ||
+        "I couldn't generate a response."
     });
 
-
   } catch (error) {
-    console.error("askToAssistant error:", error);
+
+    console.error(
+      "askToAssistant error:",
+      error
+    );
+
     return res.status(500).json({
       type: "error",
-      response: "Internal server error. Please try again.",
-      userInput: req.body.command || ""
+      response:
+        "Internal server error. Please try again.",
+      userInput:
+        req.body?.command || ""
     });
   }
 };
